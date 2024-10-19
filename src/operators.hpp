@@ -55,7 +55,7 @@ int calc_num_children(const Token& token)
     }
 }
 
-bool is_operator(Token& token)
+bool is_operator(const Token& token)
 {
     return (find(unary_operators, token.lexeme) != -1) || (find(binary_operators, token.lexeme) != -1);
 }

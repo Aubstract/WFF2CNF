@@ -17,8 +17,10 @@ struct AST_node
 {
     Token token;
     std::vector<AST_node*> children; // Variable number of children in order to deal w/ binary operators,
-    // unary operators, and identifiers (which have no children).
-    // Basically a node can have [0-2] children.
+                                     // unary operators, and identifiers (which have no children).
+                                     // Basically a node can have [0-2] children.
+    AST_node() = default;
+    AST_node(const Token& _token) : token(_token) {}
 };
 
 std::vector<Token> tokenize_wff(std::string formula)
@@ -86,7 +88,7 @@ std::vector<Token> shunting_yard(const std::vector<Token>& tokens)
                 token_stack.pop();
             }
         }
-        else if (tokens[i].type == BINARY_OPERATOR || tokens[i].type == UNARY_OPERATOR)
+        else if (is_operator(tokens[i]))
         {
             // While there is an operator on the stack AND that operator has higher-or-equal precedence than the current one
             while (!token_stack.empty()
@@ -131,11 +133,39 @@ std::vector<Token> shunting_yard(const std::vector<Token>& tokens)
     return postfix;
 }
 
+void insert_ast_nodes(AST_node*& root, const std::vector<Token>& tokens)
+{
+    std::stack<AST_node*> node_stack;
+
+    for (const Token& token : tokens)
+    {
+        AST_node* new_node = new AST_node(token);
+
+        if (is_operator(token))
+        {
+            int num_children = calc_num_children(token);
+            new_node->children.resize(num_children, nullptr);
+
+            for (int i=num_children-1; i>=0; i--)
+            {
+                new_node->children[i] = node_stack.top();
+                node_stack.pop();
+            }
+        }
+
+        node_stack.push(new_node);
+    }
+
+    root = node_stack.top();
+    node_stack.pop();
+}
+
+/*
 void insert_ast_nodes(AST_node*& root, const std::vector<Token>& tokens, int i)
 {
     if (!root)
     {
-        root = new AST_node {tokens[i], {nullptr}};
+        root = new AST_node(tokens[i]);
         root->children.resize(calc_num_children(tokens[i]), nullptr);
     }
 
@@ -144,6 +174,7 @@ void insert_ast_nodes(AST_node*& root, const std::vector<Token>& tokens, int i)
         insert_ast_nodes(root->children[j-1], tokens, i-j);
     }
 }
+*/
 
 bool equal(AST_node*& a, AST_node*&b)
 {
@@ -169,6 +200,11 @@ struct AST
 {
     AST_node* root = nullptr;
 
+    //AST(const AST& other)
+    //{
+
+    //}
+
     AST(const std::string& expression)
     {
         // Tokenize
@@ -178,7 +214,7 @@ struct AST
         tokens = shunting_yard(tokens);
 
         // Generate an AST from the tokens
-        insert_ast_nodes(root, tokens, tokens.size() - 1);
+        insert_ast_nodes(root, tokens);
     }
 };
 

@@ -27,6 +27,43 @@ private:
     static constexpr size_t PRE_TRANSFORM_INDEX = 0;
     static constexpr size_t POST_TRANSFORM_INDEX = 1;
 
+    // deep_copy is a copy-by-value function for an AST
+    AST_node* deep_copy_ast(const AST_node* root)
+    {
+        if (!root)
+        {
+            return nullptr;
+        }
+
+        AST_node* new_root = new AST_node(root->token);
+
+        for (const auto& child : root->children)
+        {
+            new_root->children.push_back(deep_copy_ast(child));
+        }
+
+        return new_root;
+    }
+
+    void apply_pattern(AST_node*& root, const std::map<std::string, AST_node*>& bindings)
+    {
+        if (!root)
+        {
+            return;
+        }
+
+        if (root->token.type == IDENTIFIER)
+        {
+            root = deep_copy_ast(bindings.at(root->token.lexeme));
+            return;
+        }
+
+        for (auto& child : root->children)
+        {
+            apply_pattern(child, bindings);
+        }
+    }
+
 public:
     Transformer(const std::vector<std::tuple<AST, AST>>& _transforms)
     {
@@ -52,7 +89,7 @@ public:
         //     identical WFF to the current node. If it is bound to something else, return false. Else if it is not
         //     bound to anything, bind the current wff node to the pattern's identifier.
 
-        if (pattern->token.type == UNARY_OPERATOR || pattern->token.type == BINARY_OPERATOR)
+        if (is_operator(pattern->token))
         {
             if (wff->token.lexeme != pattern->token.lexeme)
             {
@@ -71,7 +108,7 @@ public:
             }
             else // unbound
             {
-                bindings.insert({pattern->token.lexeme, wff});
+                bindings.insert({pattern->token.lexeme, deep_copy_ast(wff)});
             }
         }
 
@@ -88,9 +125,14 @@ public:
         return true;
     }
 
-    void apply_transform(AST_node*& wff, AST_node*& pattern, std::map<std::string, AST_node*>& bindings)
+    void apply_transform(AST_node*& wff_root, AST_node*& pattern, const std::map<std::string, AST_node*>& bindings)
     {
-
+        AST_node* populated_pattern = deep_copy_ast(pattern);
+        apply_pattern(populated_pattern, bindings); // this is a copy of the pattern, populated with the
+                                                         // values of the wff
+        // TODO: Deallocate wff_root ast
+        //AST_node* temp = wff_root;
+        wff_root = populated_pattern;
     }
 };
 
