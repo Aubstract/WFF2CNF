@@ -6,4 +6,8 @@ set(CMAKE_CXX_STANDARD 14)
 include_directories(.)
 
 add_executable(WFF2CNF
-        main.cpp)
+        src/main.cpp
+        src/AST.hpp
+        src/Token.hpp
+        src/operators.hpp
+        src/Transformer.hpp)
