@@ -4,22 +4,22 @@
 
 #include "AST.hpp"
 
-AST::AST(const std::string& expression)
+#include <utility>
+
+AST::AST(Operators _ops, const std::string& expression) : ops(std::move(_ops))
 {
     // Tokenize
-    std::vector<Token> tokens = tokenize_wff(expression);
-
+    std::vector<Token> tokens = tokenize_wff(ops, expression);
     // Translate from infix to postfix
-    tokens = shunting_yard(tokens);
-
+    tokens = shunting_yard(ops, tokens);
     // Generate an AST from the tokens
-    insert_ast_nodes(root, tokens);
+    insert_ast_nodes(ops, root, tokens);
 }
 
 AST::AST(const AST& other)
-{
-    root = deep_copy(other.getRoot());
-}
+    : ops(other.ops),
+      root(deep_copy(other.root))
+    {}
 
 AST::~AST()
 {
@@ -31,17 +31,87 @@ const AST_node* AST::getRoot() const
     return root;
 }
 
-bool AST::replaceNode(AST_node* node, const AST_node& new_node)
+AST_node* AST::findMutableNode(AST_node* curr, const AST_node* target)
 {
-    if (containsNode(this->root, node))
+    if (curr == target)
     {
-        *node = new_node;
+        return curr;
+    }
+    for (AST_node* child : curr->children)
+    {
+        AST_node* result = findMutableNode(child, target);
+        if (result)
+        {
+            return result;
+        }
+    }
+    return nullptr;
+}
+
+bool AST::replaceNode(const AST_node* node, const AST_node* new_node)
+{
+    AST_node* mut_node = findMutableNode(root, node);
+    if (mut_node && new_node)
+    {
+        for (AST_node* child : mut_node->children)
+        {
+            delete_tree(child);
+        }
+        *mut_node = *deep_copy(new_node);
         return true;
     }
     return false;
 }
 
-std::vector<Token> AST::tokenize_wff(std::string formula)
+void AST::traverseAndPrint(std::ostream& os, const AST_node* curr) const
+{
+    // Print unary operators before their operands
+    if (curr->token.type == OPERATOR && ops.getProperties(curr->token.lexeme).arity == UNARY)
+    {
+        os << curr->token.lexeme;
+    }
+
+    // Print identifiers (identifiers have no children so this is the end of a tree)
+    if (curr->token.type == IDENTIFIER)
+    {
+        os << curr->token.lexeme;
+    }
+
+    // traverse down and print
+    bool already_printed = false;
+    for (const AST_node* child : curr->children)
+    {
+        bool opened_paren = false;
+        if (curr->token.type == OPERATOR
+            && child->token.type == OPERATOR
+            && ops.getProperties(child->token.lexeme).arity != UNARY
+            && (curr->token.lexeme != child->token.lexeme || ops.getProperties(child->token.lexeme).associativity == NOT_ASSOCIATIVE))
+        {
+            opened_paren = true;
+            os << "(";
+        }
+        traverseAndPrint(os, child);
+        if (opened_paren)
+        {
+            os << ")";
+        }
+        if (!already_printed && curr->token.type == OPERATOR && ops.getProperties(curr->token.lexeme).arity == BINARY)
+        {
+            already_printed = true;
+            os << curr->token.lexeme;
+        }
+
+    }
+}
+
+std::string AST::toString() const
+{
+    std::stringstream ss;
+    traverseAndPrint(ss, root);
+    return ss.str();
+}
+
+std::vector<Token> AST::tokenize_wff(const Operators& ops, std::string formula)
 {
     std::vector<Token> tokens;
     std::string curr;
@@ -49,12 +119,23 @@ std::vector<Token> AST::tokenize_wff(std::string formula)
     {
         curr = formula[i];
 
+        // Ignore spaces
         if (curr == " ")
         {
             continue;
         }
 
-        // Handle the two-char operators (e.g. the implies operator which is =>)
+        // Handle the multi-char operators (e.g. the implies operator which is =>)
+        if (ops.matchesOperator(curr) == PARTIAL_MATCH)
+        {
+            while (i<formula.size()-1 && ops.matchesOperator(curr) == PARTIAL_MATCH)
+            {
+                curr += formula[i+1];
+                i++;
+            }
+        }
+
+        /*
         if (curr == "=" && (i < (formula.size() - 1)))
         {
             if (formula[i+1] == '>')
@@ -63,7 +144,9 @@ std::vector<Token> AST::tokenize_wff(std::string formula)
                 i++; // Skip the next char
             }
         }
+        */
 
+        /*
         if (find(unary_operators, curr) != -1) // If curr is a unary operator
         {
             tokens.push_back(Token{UNARY_OPERATOR, curr});
@@ -72,23 +155,28 @@ std::vector<Token> AST::tokenize_wff(std::string formula)
         {
             tokens.push_back(Token{BINARY_OPERATOR, curr});
         }
+         */
+        if (ops.matchesOperator(curr) == TRUE)
+        {
+            tokens.push_back({OPERATOR, curr});
+        }
         else if (curr == "(")
         {
-            tokens.push_back(Token{OPEN_PAREN, curr});
+            tokens.push_back({OPEN_PAREN, curr});
         }
         else if (curr == ")")
         {
-            tokens.push_back(Token{CLOSE_PAREN, curr});
+            tokens.push_back({CLOSE_PAREN, curr});
         }
         else // curr is an identifier
         {
-            tokens.push_back(Token{IDENTIFIER, curr});
+            tokens.push_back({IDENTIFIER, curr});
         }
     }
     return tokens;
 }
 
-std::vector<Token> AST::shunting_yard(const std::vector<Token>& tokens)
+std::vector<Token> AST::shunting_yard(const Operators& ops, const std::vector<Token>& tokens)
 {
     std::vector<Token> postfix;
     postfix.reserve(tokens.size());
@@ -100,19 +188,22 @@ std::vector<Token> AST::shunting_yard(const std::vector<Token>& tokens)
         if (tokens[i].type == IDENTIFIER)
         {
             postfix.emplace_back(tokens[i]); // Put operands right into output vec
-            if (!token_stack.empty() && find(unary_operators, token_stack.top().lexeme) != -1)
+
+            if (!token_stack.empty()
+                && ops.matchesOperator(token_stack.top().lexeme) == TRUE
+                && ops.getProperties(token_stack.top().lexeme).arity == UNARY)
             {
                 postfix.emplace_back(token_stack.top());
                 token_stack.pop();
             }
         }
-        else if (is_operator(tokens[i]))
+        else if (ops.matchesOperator(tokens[i].lexeme) == TRUE)
         {
             // While there is an operator on the stack AND that operator has higher-or-equal precedence than the current one
             while (!token_stack.empty()
-                   && find(unary_operators, tokens[i].lexeme) == -1
-                   && is_operator(token_stack.top())
-                   && (compare_precedence(token_stack.top(), tokens[i]) <= 0))
+                   && ops.matchesOperator(token_stack.top().lexeme) == TRUE
+                   && ops.getProperties(token_stack.top().lexeme).arity != UNARY
+                   && ops.hasHigherOrEqualPrecedence(token_stack.top().lexeme, tokens[i].lexeme))
             {
                 postfix.emplace_back(token_stack.top());
                 token_stack.pop();
@@ -133,7 +224,9 @@ std::vector<Token> AST::shunting_yard(const std::vector<Token>& tokens)
             }
             token_stack.pop(); // Pop the OPEN_PAREN
 
-            if (!token_stack.empty() && find(unary_operators, token_stack.top().lexeme) != -1)
+            if (!token_stack.empty()
+                && ops.matchesOperator(token_stack.top().lexeme) == TRUE
+                && ops.getProperties(token_stack.top().lexeme).arity == UNARY)
             {
                 postfix.emplace_back(token_stack.top());
                 token_stack.pop();
@@ -151,7 +244,7 @@ std::vector<Token> AST::shunting_yard(const std::vector<Token>& tokens)
     return postfix;
 }
 
-void AST::insert_ast_nodes(AST_node*& root, const std::vector<Token>& tokens)
+void AST::insert_ast_nodes(const Operators& ops, AST_node*& root, const std::vector<Token>& tokens)
 {
     std::stack<AST_node*> node_stack;
 
@@ -159,9 +252,9 @@ void AST::insert_ast_nodes(AST_node*& root, const std::vector<Token>& tokens)
     {
         AST_node* new_node = new AST_node(token);
 
-        if (is_operator(token))
+        if (ops.matchesOperator(token.lexeme) == TRUE)
         {
-            int num_children = calc_num_children(token);
+            int num_children = ops.getNumOperands(token.lexeme);
             new_node->children.resize(num_children, nullptr);
 
             for (int i=num_children-1; i>=0; i--)
@@ -189,7 +282,8 @@ void AST::delete_tree(AST_node* node)
     }
 }
 
-bool AST::containsNode(AST_node* start_node, AST_node* target) const {
+/*
+bool AST::containsNode(const AST_node* start_node, const AST_node* target) const {
     if (!start_node) {
         return false;
     }
@@ -208,6 +302,7 @@ bool AST::containsNode(AST_node* start_node, AST_node* target) const {
 
     return false;
 }
+ */
 
 AST_node* deep_copy(const AST_node* root)
 {
@@ -245,3 +340,4 @@ bool is_equal(const AST_node* a, const AST_node* b)
 
     return true;
 }
+

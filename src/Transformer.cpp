@@ -4,42 +4,56 @@
 
 #include "Transformer.hpp"
 
-Transformer::Transformer(const std::vector<std::tuple<AST, AST>>& _transforms) : transforms(_transforms) {}
+Transformer::Transformer(const Operators& _ops, const std::initializer_list<std::pair<std::string,std::string>>& _transforms)
+    : ops(_ops),
+      transforms([&_ops, &_transforms]()
+      {
+            std::vector<std::pair<AST,AST>> temp;
+            for (const auto& pair : _transforms)
+            {
+                temp.emplace_back(AST(_ops, pair.first), AST(_ops, pair.second));
+            }
+            return temp;
+      }()) // lambda function to construct ASTs using the initializer list of string pairs, and use the ASTs to
+           // initialize the vector
+    {}
 
 void Transformer::applyTransformations(AST& wff)
 {
-    traverseAndApplyTransformations(wff, wff.getRoot());
+    bool applied_transform = false;
+    do
+    {
+        applied_transform = traverseAndApplyTransformations(wff, wff.getRoot());
+    } while (applied_transform);
 }
 
-void Transformer::traverseAndApplyTransformations(AST& wff, const AST_node* curr)
+bool Transformer::traverseAndApplyTransformations(AST& wff, const AST_node* curr)
 {
-    for (const std::tuple<AST,AST>& pattern : transforms)
+    bool applied_transform = false;
+
+    for (const std::pair<AST,AST>& pattern : transforms)
     {
         std::map<std::string,AST_node*> bindings;
-        bool match = this->match(curr, std::get<PRE_TRANSFORM_INDEX>(pattern).getRoot(), bindings);
+        bool match = this->match(curr, pattern.first.getRoot(), bindings);
         if (match)
         {
-            AST_node* populated_pattern = deep_copy(std::get<POST_TRANSFORM_INDEX>(pattern).getRoot());
+            AST_node* populated_pattern = deep_copy(pattern.second.getRoot());
             applyBindings(populated_pattern, bindings);
-            wff.replaceNode(const_cast<AST_node *>(curr), *populated_pattern);
+            wff.replaceNode(curr, populated_pattern);
+            applied_transform = true;
         }
     }
 
     // traverse down
     for (const AST_node* child : curr->children)
     {
-        traverseAndApplyTransformations(wff, child);
+        if (traverseAndApplyTransformations(wff, child))
+        {
+            applied_transform = true;
+        }
     }
-}
 
-size_t Transformer::size() const
-{
-    return transforms.size();
-}
-
-AST Transformer::pre_transform_at(size_t index) const
-{
-    return std::get<PRE_TRANSFORM_INDEX>(transforms.at(index));
+    return applied_transform;
 }
 
 bool Transformer::match(const AST_node* wff,
@@ -53,7 +67,7 @@ bool Transformer::match(const AST_node* wff,
     //     identical WFF to the current node. If it is bound to something else, return false. Else if it is not
     //     bound to anything, bind the current wff node to the pattern's identifier.
 
-    if (is_operator(pattern->token))
+    if (ops.matchesOperator(pattern->token.lexeme) == TRUE)
     {
         if (wff->token.lexeme != pattern->token.lexeme)
         {
@@ -77,7 +91,7 @@ bool Transformer::match(const AST_node* wff,
     }
 
     // traverse down
-    for (size_t i=0; i< calc_num_children(pattern->token); i++)
+    for (size_t i=0; i<ops.getNumOperands(pattern->token.lexeme); i++)
     {
         bool children_equal = match(wff->children[i], pattern->children[i], bindings);
         if (!children_equal)

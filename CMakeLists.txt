@@ -10,8 +10,8 @@ add_executable(WFF2CNF
         src/AST.hpp
         src/AST.cpp
         src/Token.hpp
-        src/operators.hpp
+        src/Operators.hpp
         src/Transformer.hpp
         src/Transformer.cpp
-        src/operators.cpp
+        src/Operators.cpp
 )

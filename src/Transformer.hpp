@@ -6,6 +6,7 @@
 #define WFF2CNF_TRANSFORMER_HPP
 
 #include "AST.hpp"
+#include "Operators.hpp"
 #include <map>
 #include <string>
 #include <tuple>
@@ -22,19 +23,15 @@
 class Transformer
 {
 private:
-    const std::vector<std::tuple<AST,AST>> transforms;
+    const std::vector<std::pair<AST,AST>> transforms;
+    const Operators ops;
 
-    static constexpr size_t PRE_TRANSFORM_INDEX = 0;
-    static constexpr size_t POST_TRANSFORM_INDEX = 1;
-
-    size_t size() const;
-    AST pre_transform_at(size_t) const;
     bool match(const AST_node*, const AST_node*, std::map<std::string,AST_node*>&) const;
     void applyBindings(AST_node*&, const std::map<std::string,AST_node*>&);
-    void traverseAndApplyTransformations(AST&, const AST_node*);
+    bool traverseAndApplyTransformations(AST&, const AST_node*);
 
 public:
-    Transformer(const std::vector<std::tuple<AST, AST>>&);
+    Transformer(const Operators&, const std::initializer_list<std::pair<std::string,std::string>>&);
 
     void applyTransformations(AST&);
 };

@@ -2,8 +2,9 @@
 // Created by Aubrey on 10/19/2024.
 //
 
-#include "operators.hpp"
+#include "Operators.hpp"
 
+/*
 int calc_num_children(const Token& token)
 {
     if (token.type == IDENTIFIER)
@@ -79,3 +80,4 @@ int compare_precedence(const Token& a, const Token& b)
         }
     }
 }
+ */

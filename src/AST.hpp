@@ -5,10 +5,11 @@
 #ifndef WFF2CNF_AST_HPP
 #define WFF2CNF_AST_HPP
 
-#include "operators.hpp"
+#include "Operators.hpp"
 #include "Token.hpp"
 #include <stack>
 #include <string>
+#include <sstream>
 #include <vector>
 
 struct AST_node
@@ -25,24 +26,28 @@ class AST
 {
 private:
     AST_node* root = nullptr;
+    Operators ops;
 
-    std::vector<Token> tokenize_wff(std::string);
-    std::vector<Token> shunting_yard(const std::vector<Token>&);
-    void insert_ast_nodes(AST_node*&, const std::vector<Token>&);
+    std::vector<Token> tokenize_wff(const Operators&, std::string);
+    std::vector<Token> shunting_yard(const Operators&, const std::vector<Token>&);
+    void insert_ast_nodes(const Operators&, AST_node*&, const std::vector<Token>&);
     void delete_tree(AST_node*);
-    bool containsNode(AST_node*, AST_node*) const;
+    AST_node* findMutableNode(AST_node*, const AST_node*);
+    void traverseAndPrint(std::ostream&, const AST_node*) const;
 
 public:
-    AST(const std::string&);
+    AST(Operators  ops, const std::string&);
     AST(const AST&);
     ~AST();
 
     const AST_node* getRoot() const;
-    bool replaceNode(AST_node*, const AST_node&);
+    bool replaceNode(const AST_node*, const AST_node*);
     std::string toString() const;
 };
 
 AST_node* deep_copy(const AST_node*);
 bool is_equal(const AST_node* , const AST_node*);
+
+// std::equal_to<AST>(AST&);
 
 #endif //WFF2CNF_AST_HPP
