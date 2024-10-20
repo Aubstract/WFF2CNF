@@ -8,6 +8,10 @@ include_directories(.)
 add_executable(WFF2CNF
         src/main.cpp
         src/AST.hpp
+        src/AST.cpp
         src/Token.hpp
         src/operators.hpp
-        src/Transformer.hpp)
+        src/Transformer.hpp
+        src/Transformer.cpp
+        src/operators.cpp
+)
