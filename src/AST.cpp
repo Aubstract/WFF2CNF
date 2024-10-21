@@ -11,11 +11,11 @@ AST::AST(Symbols _symbols, Operators _ops, const std::string& expression)
       symbols(std::move(_symbols))
 {
     // Tokenize
-    std::vector<Token> tokens = tokenize_wff(expression);
+    std::vector<Token> tokens = tokenizeWff(expression);
     // Translate from infix to postfix
-    tokens = shunting_yard(tokens);
+    tokens = shuntingYard(tokens);
     // Generate an AST from the tokens
-    insert_ast_nodes(root, tokens);
+    insertNodes(root, tokens);
 }
 
 AST::AST(const AST& other)
@@ -26,7 +26,7 @@ AST::AST(const AST& other)
 
 AST::~AST()
 {
-    delete_tree(root);
+    deleteTree(root);
 }
 
 const AST_node* AST::getRoot() const
@@ -58,7 +58,7 @@ bool AST::replaceNode(const AST_node* node, const AST_node* new_node)
     {
         for (AST_node* child : mut_node->children)
         {
-            delete_tree(child);
+            deleteTree(child);
         }
         *mut_node = *deep_copy(new_node);
         return true;
@@ -114,7 +114,7 @@ std::string AST::toString() const
     return ss.str();
 }
 
-std::vector<Token> AST::tokenize_wff(std::string formula)
+std::vector<Token> AST::tokenizeWff(std::string formula)
 {
     std::vector<Token> tokens;
     std::string curr;
@@ -166,7 +166,7 @@ std::vector<Token> AST::tokenize_wff(std::string formula)
     return tokens;
 }
 
-std::vector<Token> AST::shunting_yard(const std::vector<Token>& tokens)
+std::vector<Token> AST::shuntingYard(const std::vector<Token>& tokens)
 {
     std::vector<Token> postfix;
     postfix.reserve(tokens.size());
@@ -233,7 +233,7 @@ std::vector<Token> AST::shunting_yard(const std::vector<Token>& tokens)
     return postfix;
 }
 
-void AST::insert_ast_nodes(AST_node*& curr, const std::vector<Token>& tokens)
+void AST::insertNodes(AST_node*& curr, const std::vector<Token>& tokens)
 {
     std::stack<AST_node*> node_stack;
 
@@ -260,12 +260,12 @@ void AST::insert_ast_nodes(AST_node*& curr, const std::vector<Token>& tokens)
     node_stack.pop();
 }
 
-void AST::delete_tree(AST_node* curr)
+void AST::deleteTree(AST_node* curr)
 {
     if (curr)
     {
         for (AST_node* child : curr->children) {
-            delete_tree(child);
+            deleteTree(child);
         }
         delete curr;
     }

@@ -19,9 +19,11 @@ struct AST_node
     std::vector<AST_node*> children; // Variable number of children in order to deal w/ binary operators,
                                      // unary operators, and identifiers (which have no children).
                                      // Basically a node can have [0-2] children.
-    AST_node() = default;
     AST_node(const Token& _token) : token(_token) {}
 };
+
+AST_node* deep_copy(const AST_node*);
+bool is_equal(const AST_node* , const AST_node*);
 
 class AST
 {
@@ -30,10 +32,10 @@ private:
     Symbols symbols;
     Operators ops;
 
-    std::vector<Token> tokenize_wff(std::string);
-    std::vector<Token> shunting_yard(const std::vector<Token>&);
-    void insert_ast_nodes(AST_node*&, const std::vector<Token>&);
-    void delete_tree(AST_node*);
+    std::vector<Token> tokenizeWff(std::string);
+    std::vector<Token> shuntingYard(const std::vector<Token>&);
+    void insertNodes(AST_node*&, const std::vector<Token>&);
+    void deleteTree(AST_node*);
     AST_node* findMutableNode(AST_node*, const AST_node*);
     void traverseAndPrint(std::ostream&, const AST_node*) const;
 
@@ -46,10 +48,5 @@ public:
     bool replaceNode(const AST_node*, const AST_node*);
     std::string toString() const;
 };
-
-AST_node* deep_copy(const AST_node*);
-bool is_equal(const AST_node* , const AST_node*);
-
-// std::equal_to<AST>(AST&);
 
 #endif //WFF2CNF_AST_HPP
