@@ -9,16 +9,16 @@ Transformer::Transformer(const Symbols& _symbols,
                          const Operators& _ops,
                          const std::initializer_list<std::pair<std::string,std::string>>& _transforms)
     : symbols(_symbols),
-      ops(_ops),
       transforms([&_ops, &_transforms, &_symbols]()
       {
-            std::vector<std::pair<AST,AST>> temp;
-            for (const auto& pair : _transforms)
-            {
-                temp.emplace_back(AST(_symbols, _ops, pair.first), AST(_symbols, _ops, pair.second));
-            }
-            return temp;
-      }()) // lambda function to construct ASTs using the initializer list of string pairs, and use the ASTs to
+          std::vector<std::pair<AST,AST>> temp;
+          for (const auto& pair : _transforms)
+          {
+              temp.emplace_back(AST(_symbols, _ops, pair.first), AST(_symbols, _ops, pair.second));
+          }
+          return temp;
+      }()),
+      ops(_ops) // lambda function to construct ASTs using the initializer list of string pairs, and use the ASTs to
            // initialize the vector
     {}
 

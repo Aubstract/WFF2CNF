@@ -10,7 +10,7 @@
 #include "Symbols.hpp"
 #include <map>
 #include <string>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 // Transformations is a container class that allows you to store key-value pairs, but also allows you to read a key at
@@ -29,7 +29,7 @@ private:
     const Operators ops;
 
     bool match(const AST_node*, const AST_node*, std::map<std::string,AST_node*>&) const;
-    void applyBindings(AST_node*&, const std::map<std::string,AST_node*>&);
+    static void applyBindings(AST_node*&, const std::map<std::string,AST_node*>&);
     bool traverseAndApplyTransformations(AST&, const AST_node*);
 
 public:

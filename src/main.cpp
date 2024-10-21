@@ -87,8 +87,6 @@ int main() {
     AST wff(symbols, ops, "(p+!(q*r))=>((p+s)*t)");
     //AST wff(symbols, ops, "!q+p+q");
 
-    //std::cout << "\nWFF: " << wff.toString() << std::endl;
-
     wff2cnf.applyTransformations(wff);
 
     auto end_time = std::chrono::high_resolution_clock::now();

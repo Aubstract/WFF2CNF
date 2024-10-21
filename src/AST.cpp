@@ -10,18 +10,15 @@ AST::AST(Symbols _symbols, Operators _ops, const std::string& expression)
     : ops(std::move(_ops)),
       symbols(std::move(_symbols))
 {
-    // Tokenize
-    std::vector<Token> tokens = tokenizeWff(expression);
-    // Translate from infix to postfix
-    tokens = shuntingYard(tokens);
-    // Generate an AST from the tokens
-    insertNodes(root, tokens);
+    std::vector<Token> tokens = tokenizeWff(expression); // Tokenize
+    tokens = shuntingYard(tokens); // Translate from infix to postfix
+    insertNodes(root, tokens); // Generate an AST from the tokens
 }
 
 AST::AST(const AST& other)
-    : symbols(other.symbols),
-      ops(other.ops),
-      root(deep_copy(other.root))
+    : root(deep_copy(other.root)),
+      symbols(other.symbols),
+      ops(other.ops)
     {}
 
 AST::~AST()
@@ -88,7 +85,8 @@ void AST::traverseAndPrint(std::ostream& os, const AST_node* curr) const
         if (curr->token.type == OPERATOR
             && child->token.type == OPERATOR
             && ops.getProperties(child->token.lexeme).arity != UNARY
-            && (curr->token.lexeme != child->token.lexeme || ops.getProperties(child->token.lexeme).associativity == NOT_ASSOCIATIVE))
+            && (curr->token.lexeme != child->token.lexeme
+                || ops.getProperties(child->token.lexeme).associativity == NOT_ASSOCIATIVE))
         {
             opened_paren = true;
             os << "(";
@@ -114,7 +112,7 @@ std::string AST::toString() const
     return ss.str();
 }
 
-std::vector<Token> AST::tokenizeWff(std::string formula)
+std::vector<Token> AST::tokenizeWff(const std::string& formula) const
 {
     std::vector<Token> tokens;
     std::string curr;
@@ -166,7 +164,7 @@ std::vector<Token> AST::tokenizeWff(std::string formula)
     return tokens;
 }
 
-std::vector<Token> AST::shuntingYard(const std::vector<Token>& tokens)
+std::vector<Token> AST::shuntingYard(const std::vector<Token>& tokens) const
 {
     std::vector<Token> postfix;
     postfix.reserve(tokens.size());
@@ -233,7 +231,7 @@ std::vector<Token> AST::shuntingYard(const std::vector<Token>& tokens)
     return postfix;
 }
 
-void AST::insertNodes(AST_node*& curr, const std::vector<Token>& tokens)
+void AST::insertNodes(AST_node*& curr, const std::vector<Token>& tokens) const
 {
     std::stack<AST_node*> node_stack;
 

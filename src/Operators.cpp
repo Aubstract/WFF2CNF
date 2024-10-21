@@ -34,11 +34,6 @@ MatchLevel Operators::matchesOperator(const std::string& query) const
 
 const OperationProperties& Operators::getProperties(const std::string& op) const
 {
-    if (!this->matchesOperator(op))
-    {
-        int i = 0;
-    }
-
     return operators.at(op);
 }
 

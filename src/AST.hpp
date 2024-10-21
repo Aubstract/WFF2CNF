@@ -32,11 +32,11 @@ private:
     Symbols symbols;
     Operators ops;
 
-    std::vector<Token> tokenizeWff(std::string);
-    std::vector<Token> shuntingYard(const std::vector<Token>&);
-    void insertNodes(AST_node*&, const std::vector<Token>&);
-    void deleteTree(AST_node*);
-    AST_node* findMutableNode(AST_node*, const AST_node*);
+    std::vector<Token> tokenizeWff(const std::string&) const;
+    std::vector<Token> shuntingYard(const std::vector<Token>&) const;
+    void insertNodes(AST_node*&, const std::vector<Token>&) const;
+    static void deleteTree(AST_node*);
+    static AST_node* findMutableNode(AST_node*, const AST_node*);
     void traverseAndPrint(std::ostream&, const AST_node*) const;
 
 public:
