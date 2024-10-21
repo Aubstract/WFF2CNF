@@ -7,6 +7,7 @@
 
 #include "AST.hpp"
 #include "Operators.hpp"
+#include "Symbols.hpp"
 #include <map>
 #include <string>
 #include <tuple>
@@ -23,6 +24,7 @@
 class Transformer
 {
 private:
+    const Symbols symbols;
     const std::vector<std::pair<AST,AST>> transforms;
     const Operators ops;
 
@@ -31,7 +33,7 @@ private:
     bool traverseAndApplyTransformations(AST&, const AST_node*);
 
 public:
-    Transformer(const Operators&, const std::initializer_list<std::pair<std::string,std::string>>&);
+    Transformer(const Symbols&, const Operators&, const std::initializer_list<std::pair<std::string,std::string>>&);
 
     void applyTransformations(AST&);
 };

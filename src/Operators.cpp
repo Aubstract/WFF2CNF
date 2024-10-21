@@ -4,80 +4,74 @@
 
 #include "Operators.hpp"
 
-/*
-int calc_num_children(const Token& token)
-{
-    if (token.type == IDENTIFIER)
+Operators::Operators(std::initializer_list<std::pair<std::string,OperationProperties>> ops)
+    : operators([&ops]()
     {
-        return 0;
-    }
-    else if (token.type == UNARY_OPERATOR)
-    {
-        return 1;
-    }
-    else if (token.type == BINARY_OPERATOR)
-    {
-        return 2;
-    }
-    else // default
-    {
-        return 0;
-    }
-}
-
-bool is_operator(const Token& token)
-{
-    return (find(unary_operators, token.lexeme) != -1) || (find(binary_operators, token.lexeme) != -1);
-}
-
-// if operator A has a higher precedence than operator B, then it will return 1,
-// if they are the same precedence it will return 0,
-// if operator B has a higher precedence than operator A, then it will return -1
-int compare_precedence(const Token& a, const Token& b)
-{
-    if (find(unary_operators, a.lexeme) != -1) // operator A is unary
-    {
-        if (find(unary_operators, b.lexeme) != -1) // operator A is unary and operator B is unary
+        std::unordered_map<std::string,OperationProperties> temp;
+        for (const auto& op : ops)
         {
-            if (find(unary_operators, a.lexeme) < find(unary_operators, b.lexeme))
-            {
-                return 1;
-            }
-            else if (find(unary_operators, a.lexeme) == find(unary_operators, b.lexeme))
-            {
-                return 0;
-            }
-            else
-            {
-                return -1;
-            }
+            temp[op.first] = op.second;
         }
-        else // operator A is unary and operator B is binary
-        {
+        return temp;
+    }())
+    {}
+
+MatchLevel Operators::matchesOperator(const std::string& query) const
+{
+    if (operators.find(query) != operators.end())
+    {
+        return MATCH_TRUE;
+    }
+    else if (partialMatch(query))
+    {
+        return MATCH_PARTIAL;
+    }
+    else
+    {
+        return MATCH_FALSE;
+    }
+}
+
+const OperationProperties& Operators::getProperties(const std::string& op) const
+{
+    if (!this->matchesOperator(op))
+    {
+        int i = 0;
+    }
+
+    return operators.at(op);
+}
+
+int Operators::getNumOperands(const std::string& op) const
+{
+    if (matchesOperator(op) != MATCH_TRUE)
+    {
+        return 0;
+    }
+
+    switch (getProperties(op).arity)
+    {
+        case UNARY:
             return 1;
-        }
-    }
-    else // operator A is binary
-    {
-        if (find(unary_operators, b.lexeme) != -1) // operator A is binary and operator B is unary
-        {
-            return -1;
-        }
-        else // operator A is binary and operator B is binary
-        {
-            if (find(binary_operators, a.lexeme) < find(unary_operators, b.lexeme))
-            {
-                return 1;
-            }
-            else if (find(binary_operators, a.lexeme) == find(unary_operators, b.lexeme))
-            {
-                return 0;
-            }
-            else
-            {
-                return -1;
-            }
-        }
+        case BINARY:
+            return 2;
+        default:
+            return 0;
     }
 }
- */
+
+bool Operators::hasHigherOrEqualPrecedence(const std::string& op1, const std::string& op2) const
+{
+    return operators.at(op1).precedence >= operators.at(op2).precedence;
+}
+
+bool Operators::partialMatch(const std::string& query) const
+{
+    for (const auto& pair : operators)
+    {
+        if (std::mismatch(query.begin(), query.end(), pair.first.begin(), pair.first.end()).first == query.end()) {
+            return true; // Partial match found
+        }
+    }
+    return false; // No partial match found
+}

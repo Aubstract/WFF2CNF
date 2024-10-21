@@ -14,4 +14,6 @@ add_executable(WFF2CNF
         src/Transformer.hpp
         src/Transformer.cpp
         src/Operators.cpp
+        src/Symbols.cpp
+        src/Symbols.hpp
 )

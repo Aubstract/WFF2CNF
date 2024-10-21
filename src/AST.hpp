@@ -5,6 +5,7 @@
 #ifndef WFF2CNF_AST_HPP
 #define WFF2CNF_AST_HPP
 
+#include "Symbols.hpp"
 #include "Operators.hpp"
 #include "Token.hpp"
 #include <stack>
@@ -26,17 +27,18 @@ class AST
 {
 private:
     AST_node* root = nullptr;
+    Symbols symbols;
     Operators ops;
 
-    std::vector<Token> tokenize_wff(const Operators&, std::string);
-    std::vector<Token> shunting_yard(const Operators&, const std::vector<Token>&);
-    void insert_ast_nodes(const Operators&, AST_node*&, const std::vector<Token>&);
+    std::vector<Token> tokenize_wff(std::string);
+    std::vector<Token> shunting_yard(const std::vector<Token>&);
+    void insert_ast_nodes(AST_node*&, const std::vector<Token>&);
     void delete_tree(AST_node*);
     AST_node* findMutableNode(AST_node*, const AST_node*);
     void traverseAndPrint(std::ostream&, const AST_node*) const;
 
 public:
-    AST(Operators  ops, const std::string&);
+    AST(Symbols, Operators, const std::string&);
     AST(const AST&);
     ~AST();
 

@@ -2,16 +2,20 @@
 // Created by Aubrey on 10/19/2024.
 //
 
+#include <iostream>
 #include "Transformer.hpp"
 
-Transformer::Transformer(const Operators& _ops, const std::initializer_list<std::pair<std::string,std::string>>& _transforms)
-    : ops(_ops),
-      transforms([&_ops, &_transforms]()
+Transformer::Transformer(const Symbols& _symbols,
+                         const Operators& _ops,
+                         const std::initializer_list<std::pair<std::string,std::string>>& _transforms)
+    : symbols(_symbols),
+      ops(_ops),
+      transforms([&_ops, &_transforms, &_symbols]()
       {
             std::vector<std::pair<AST,AST>> temp;
             for (const auto& pair : _transforms)
             {
-                temp.emplace_back(AST(_ops, pair.first), AST(_ops, pair.second));
+                temp.emplace_back(AST(_symbols, _ops, pair.first), AST(_symbols, _ops, pair.second));
             }
             return temp;
       }()) // lambda function to construct ASTs using the initializer list of string pairs, and use the ASTs to
@@ -37,6 +41,7 @@ bool Transformer::traverseAndApplyTransformations(AST& wff, const AST_node* curr
         bool match = this->match(curr, pattern.first.getRoot(), bindings);
         if (match)
         {
+            std::cout << wff.toString() << std::endl;
             AST_node* populated_pattern = deep_copy(pattern.second.getRoot());
             applyBindings(populated_pattern, bindings);
             wff.replaceNode(curr, populated_pattern);
@@ -67,19 +72,19 @@ bool Transformer::match(const AST_node* wff,
     //     identical WFF to the current node. If it is bound to something else, return false. Else if it is not
     //     bound to anything, bind the current wff node to the pattern's identifier.
 
-    if (ops.matchesOperator(pattern->token.lexeme) == TRUE)
+    if (ops.matchesOperator(pattern->token.lexeme) == MATCH_TRUE)
     {
         if (wff->token.lexeme != pattern->token.lexeme)
         {
             return false;
         }
     }
-    else // pattern node is an identifier
+    else if (pattern->token.type == VARIABLE)
     {
         if (bindings.find(pattern->token.lexeme) != bindings.end()) // if already bound
         {
-            if (!is_equal(wff, bindings.at(pattern->token.lexeme))) // if the stored binding is not identical
-                // to the current wff
+            if (!is_equal(wff, bindings.at(pattern->token.lexeme)))  // if the stored binding is not identical
+                                                                        // to the current wff
             {
                 return false;
             }
@@ -87,6 +92,13 @@ bool Transformer::match(const AST_node* wff,
         else // unbound
         {
             bindings.insert({pattern->token.lexeme, deep_copy(wff)});
+        }
+    }
+    else // pattern token is a constant
+    {
+        if (wff->token.lexeme != pattern->token.lexeme)
+        {
+            return false;
         }
     }
 
@@ -105,7 +117,7 @@ bool Transformer::match(const AST_node* wff,
 
 void Transformer::applyBindings(AST_node*& root, const std::map<std::string,AST_node*>& bindings)
 {
-    if (root->token.type == IDENTIFIER)
+    if (root->token.type == VARIABLE)
     {
         root = deep_copy(bindings.at(root->token.lexeme));
         return;
