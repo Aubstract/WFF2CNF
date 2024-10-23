@@ -141,7 +141,7 @@ int main() {
     //AST wff(symbols, ops, "((p+!(q*r))=>((p+s)*t))=>(p*q)");
     //AST wff(symbols, ops, "(((p+!(q*r))=>((p+s)*t))=>(p*q))*(!q+p+q)+((p+!(q*r))=>((p+s)*t))");
 
-    wff2dnf.applyTransformations(wff);
+    wff2cnf.applyTransformations(wff);
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
