@@ -5,8 +5,8 @@
 #include <iostream>
 #include "Transformer.hpp"
 
-Transformer::Transformer(const Symbols& _symbols,
-                         const Operators& _ops,
+Transformer::Transformer(const Symbols* _symbols,
+                         const Operators* _ops,
                          const std::initializer_list<std::pair<std::string,std::string>>& _transforms)
     : symbols(_symbols),
       transforms([&_ops, &_transforms, &_symbols]()
@@ -24,6 +24,9 @@ Transformer::Transformer(const Symbols& _symbols,
 
 void Transformer::applyTransformations(AST& wff)
 {
+    // DEBUG
+    std::cout << wff.toString() << std::endl;
+
     bool applied_transform = false;
     do
     {
@@ -41,11 +44,18 @@ bool Transformer::traverseAndApplyTransformations(AST& wff, const AST_node* curr
         bool match = this->match(curr, pattern.first.getRoot(), bindings);
         if (match)
         {
-            std::cout << wff.toString() << std::endl;
             AST_node* populated_pattern = deep_copy(pattern.second.getRoot());
             applyBindings(populated_pattern, bindings);
             wff.replaceNode(curr, populated_pattern);
             applied_transform = true;
+
+            // DEBUG
+            std::cout << wff.toString()
+                      << " applied: "
+                      << pattern.first.toString()
+                      << " -> "
+                      << pattern.second.toString()
+                      << std::endl;
         }
     }
 
@@ -72,7 +82,7 @@ bool Transformer::match(const AST_node* wff,
     //     identical WFF to the current node. If it is bound to something else, return false. Else if it is not
     //     bound to anything, bind the current wff node to the pattern's identifier.
 
-    if (ops.matchesOperator(pattern->token.lexeme) == MATCH_TRUE)
+    if (ops->matchesOperator(pattern->token.lexeme) == MATCH_TRUE)
     {
         if (wff->token.lexeme != pattern->token.lexeme)
         {
@@ -103,7 +113,7 @@ bool Transformer::match(const AST_node* wff,
     }
 
     // traverse down
-    for (size_t i=0; i<ops.getNumOperands(pattern->token.lexeme); i++)
+    for (size_t i=0; i<ops->getNumOperands(pattern->token.lexeme); i++)
     {
         bool children_equal = match(wff->children[i], pattern->children[i], bindings);
         if (!children_equal)

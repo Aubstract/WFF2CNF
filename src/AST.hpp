@@ -29,8 +29,8 @@ class AST
 {
 private:
     AST_node* root = nullptr;
-    Symbols symbols;
-    Operators ops;
+    const Symbols* symbols;
+    const Operators* ops;
 
     std::vector<Token> tokenizeWff(const std::string&) const;
     std::vector<Token> shuntingYard(const std::vector<Token>&) const;
@@ -40,7 +40,7 @@ private:
     void traverseAndPrint(std::ostream&, const AST_node*) const;
 
 public:
-    AST(Symbols, Operators, const std::string&);
+    AST(const Symbols*, const Operators*, const std::string&);
     AST(const AST&);
     ~AST();
 

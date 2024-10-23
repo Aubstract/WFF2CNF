@@ -24,16 +24,16 @@
 class Transformer
 {
 private:
-    const Symbols symbols;
+    const Symbols *symbols;
+    const Operators *ops;
     const std::vector<std::pair<AST,AST>> transforms;
-    const Operators ops;
 
     bool match(const AST_node*, const AST_node*, std::map<std::string,AST_node*>&) const;
     static void applyBindings(AST_node*&, const std::map<std::string,AST_node*>&);
     bool traverseAndApplyTransformations(AST&, const AST_node*);
 
 public:
-    Transformer(const Symbols&, const Operators&, const std::initializer_list<std::pair<std::string,std::string>>&);
+    Transformer(const Symbols*, const Operators*, const std::initializer_list<std::pair<std::string,std::string>>&);
 
     void applyTransformations(AST&);
 };

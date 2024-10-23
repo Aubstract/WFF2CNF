@@ -6,9 +6,9 @@
 
 #include <utility>
 
-AST::AST(Symbols _symbols, Operators _ops, const std::string& expression) 
-    : ops(std::move(_ops)),
-      symbols(std::move(_symbols))
+AST::AST(const Symbols* _symbols, const Operators* _ops, const std::string& expression)
+    : symbols(_symbols),
+      ops(_ops)
 {
     std::vector<Token> tokens = tokenizeWff(expression); // Tokenize
     tokens = shuntingYard(tokens); // Translate from infix to postfix
@@ -66,7 +66,7 @@ bool AST::replaceNode(const AST_node* node, const AST_node* new_node)
 void AST::traverseAndPrint(std::ostream& os, const AST_node* curr) const
 {
     // Print unary operators before their operands
-    if (curr->token.type == OPERATOR && ops.getProperties(curr->token.lexeme).arity == UNARY)
+    if (curr->token.type == OPERATOR && ops->getProperties(curr->token.lexeme).arity == UNARY)
     {
         os << curr->token.lexeme;
     }
@@ -84,9 +84,9 @@ void AST::traverseAndPrint(std::ostream& os, const AST_node* curr) const
         bool opened_paren = false;
         if (curr->token.type == OPERATOR
             && child->token.type == OPERATOR
-            && ops.getProperties(child->token.lexeme).arity != UNARY
+            && ops->getProperties(child->token.lexeme).arity != UNARY
             && (curr->token.lexeme != child->token.lexeme
-                || ops.getProperties(child->token.lexeme).associativity == NOT_ASSOCIATIVE))
+                || ops->getProperties(child->token.lexeme).associativity == NOT_ASSOCIATIVE))
         {
             opened_paren = true;
             os << "(";
@@ -96,7 +96,7 @@ void AST::traverseAndPrint(std::ostream& os, const AST_node* curr) const
         {
             os << ")";
         }
-        if (!already_printed && curr->token.type == OPERATOR && ops.getProperties(curr->token.lexeme).arity == BINARY)
+        if (!already_printed && curr->token.type == OPERATOR && ops->getProperties(curr->token.lexeme).arity == BINARY)
         {
             already_printed = true;
             os << curr->token.lexeme;
@@ -127,16 +127,16 @@ std::vector<Token> AST::tokenizeWff(const std::string& formula) const
         }
 
         // Handle the multi-char operators (e.g. the implies operator which is =>)
-        if (ops.matchesOperator(curr) == MATCH_PARTIAL)
+        if (ops->matchesOperator(curr) == MATCH_PARTIAL)
         {
-            while (i<formula.size()-1 && ops.matchesOperator(curr) == MATCH_PARTIAL)
+            while (i<formula.size()-1 && ops->matchesOperator(curr) == MATCH_PARTIAL)
             {
                 curr += formula[i+1];
                 i++;
             }
         }
 
-        if (ops.matchesOperator(curr) == MATCH_TRUE)
+        if (ops->matchesOperator(curr) == MATCH_TRUE)
         {
             tokens.emplace_back(OPERATOR, curr);
         }
@@ -148,11 +148,11 @@ std::vector<Token> AST::tokenizeWff(const std::string& formula) const
         {
             tokens.emplace_back(CLOSE_PAREN, curr);
         }
-        else if (symbols.isVariable(curr))
+        else if (symbols->isVariable(curr))
         {
             tokens.emplace_back(VARIABLE, curr);
         }
-        else if (symbols.isConstant(curr))
+        else if (symbols->isConstant(curr))
         {
             tokens.emplace_back(CONSTANT, curr);
         }
@@ -177,20 +177,20 @@ std::vector<Token> AST::shuntingYard(const std::vector<Token>& tokens) const
             postfix.emplace_back(tokens[i]); // Put operands right into output vec
 
             if (!token_stack.empty()
-                && ops.matchesOperator(token_stack.top().lexeme) == MATCH_TRUE
-                && ops.getProperties(token_stack.top().lexeme).arity == UNARY)
+                && ops->matchesOperator(token_stack.top().lexeme) == MATCH_TRUE
+                && ops->getProperties(token_stack.top().lexeme).arity == UNARY)
             {
                 postfix.emplace_back(token_stack.top());
                 token_stack.pop();
             }
         }
-        else if (ops.matchesOperator(tokens[i].lexeme) == MATCH_TRUE)
+        else if (ops->matchesOperator(tokens[i].lexeme) == MATCH_TRUE)
         {
             // While there is an operator on the stack AND that operator has higher-or-equal precedence than the current one
             while (!token_stack.empty()
-                   && ops.matchesOperator(token_stack.top().lexeme) == MATCH_TRUE
-                   && ops.getProperties(token_stack.top().lexeme).arity != UNARY
-                   && ops.hasHigherOrEqualPrecedence(token_stack.top().lexeme, tokens[i].lexeme))
+                   && ops->matchesOperator(token_stack.top().lexeme) == MATCH_TRUE
+                   && ops->getProperties(token_stack.top().lexeme).arity != UNARY
+                   && ops->hasHigherOrEqualPrecedence(token_stack.top().lexeme, tokens[i].lexeme))
             {
                 postfix.emplace_back(token_stack.top());
                 token_stack.pop();
@@ -212,8 +212,8 @@ std::vector<Token> AST::shuntingYard(const std::vector<Token>& tokens) const
             token_stack.pop(); // Pop the OPEN_PAREN
 
             if (!token_stack.empty()
-                && ops.matchesOperator(token_stack.top().lexeme) == MATCH_TRUE
-                && ops.getProperties(token_stack.top().lexeme).arity == UNARY)
+                && ops->matchesOperator(token_stack.top().lexeme) == MATCH_TRUE
+                && ops->getProperties(token_stack.top().lexeme).arity == UNARY)
             {
                 postfix.emplace_back(token_stack.top());
                 token_stack.pop();
@@ -239,9 +239,9 @@ void AST::insertNodes(AST_node*& curr, const std::vector<Token>& tokens) const
     {
         AST_node* new_node = new AST_node(token);
 
-        if (ops.matchesOperator(token.lexeme) == MATCH_TRUE)
+        if (ops->matchesOperator(token.lexeme) == MATCH_TRUE)
         {
-            int num_children = ops.getNumOperands(token.lexeme);
+            int num_children = ops->getNumOperands(token.lexeme);
             new_node->children.resize(num_children, nullptr);
 
             for (int i=num_children-1; i>=0; i--)
