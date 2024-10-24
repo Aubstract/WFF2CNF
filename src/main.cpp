@@ -90,54 +90,13 @@ int main() {
             }
         };
 
-    Transformer wff2dnf = {&symbols, &ops,
-            {
-                    {"a=>b", "!a+b"},           // Implication
-                    {"!(a+b)", "!a*!b"},        // De Morgan's Law
-                    {"!(a*b)", "!a+!b"},
-                    {"a*a", "a"},               // Identity
-                    {"a+a", "a"},
-                    {"a*1", "a"},               // Identities of Operators
-                    {"1*a", "a"},
-                    {"a+0", "a"},
-                    {"0+a", "a"},
-                    {"a*0", "0"},
-                    {"0*a", "0"},
-                    {"a+1", "1"},
-                    {"1+a", "1"},
-                    {"a+!a", "1"},              // Complement
-                    {"!a+a", "1"},
-                    {"a*!a", "0"},
-                    {"!a*a", "0"},
-                    {"a+(a*b)", "a"},           // Absorption (8 scenarios)
-                    {"a+(b*a)", "a"},
-                    {"(a*b)+a", "a"},
-                    {"(b*a)+a", "a"},
-                    {"a*(a+b)", "a"},
-                    {"a*(b+a)", "a"},
-                    {"(a+b)*a", "a"},
-                    {"(b+a)*a", "a"},
-                    {"(a+b)*(!b+c)", "a+c"},    // Resolution (8 scenarios)
-                    {"(a+b)*(c+!b)", "a+c"},
-                    {"(b+a)*(!b+c)", "a+c"},
-                    {"(b+a)*(c+!b)", "a+c"},
-                    {"(!b+c)*(a+b)", "a+c"},
-                    {"(c+!b)*(a+b)", "a+c"},
-                    {"(!b+c)*(b+a)", "a+c"},
-                    {"(c+!b)*(b+a)", "a+c"},
-                    {"(a+b)*c", "(a*c)+(b*c)"}, // Distribution
-                    {"c*(a+b)", "(a*c)+(b*c)"},
-                    {"!!a", "a"}                // Remove double negation
-            }
-    };
-
     //std::string formula;
     //std::cout << "Enter a WFF: ";
     //std::getline(std::cin, formula);
     //AST wff(symbols, ops, formula);
 
-    //AST wff(symbols, ops, "!q+p+q");
-    AST wff(&symbols, &ops, "(p+!(q*r))=>((p+s)*t)");
+    AST wff(&symbols, &ops, "((p+!(q*r))=>((p+s)*t))=>!(!t*(!s=>(p+r))+(((!s+!t))=>((p+r)*t)))");
+    //AST wff(&symbols, &ops, "(p+!(q*r))=>((p+s)*t)");
     //AST wff(symbols, ops, "((p+!(q*r))=>((p+s)*t))=>(p*q)");
     //AST wff(symbols, ops, "(((p+!(q*r))=>((p+s)*t))=>(p*q))*(!q+p+q)+((p+!(q*r))=>((p+s)*t))");
 

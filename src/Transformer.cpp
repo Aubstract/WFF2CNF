@@ -51,10 +51,10 @@ bool Transformer::traverseAndApplyTransformations(AST& wff, const AST_node* curr
 
             // DEBUG
             std::cout << wff.toString()
-                      //<< " applied: "
-                      //<< pattern.first.toString()
-                      //<< " -> "
-                      //<< pattern.second.toString()
+                      << " applied: "
+                      << pattern.first.toString()
+                      << " -> "
+                      << pattern.second.toString()
                       << std::endl;
         }
     }
@@ -69,6 +69,11 @@ bool Transformer::traverseAndApplyTransformations(AST& wff, const AST_node* curr
     }
 
     return applied_transform;
+}
+
+bool containsPatternInAssociation(const AST_node* curr, const AST_node* pattern)
+{
+
 }
 
 bool Transformer::match(const AST_node* wff,
@@ -98,8 +103,11 @@ bool Transformer::match(const AST_node* wff,
             //
             // Only return false if an equal expression doesnt exit in ALL the connected, associative operands
             // of the parent operator
+            if (containsPatternInAssociation(wff, bindings.at(pattern->token.lexeme)))
+            {
 
-            if (!is_equal(wff, bindings.at(pattern->token.lexeme)))  // if the stored binding is not identical
+            }
+            else if (!is_equal(wff, bindings.at(pattern->token.lexeme)))  // if the stored binding is not identical
                                                                         // to the current wff
             {
                 return false;
