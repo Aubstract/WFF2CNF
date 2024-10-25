@@ -95,10 +95,11 @@ int main() {
     //std::getline(std::cin, formula);
     //AST wff(symbols, ops, formula);
 
-    AST wff(&symbols, &ops, "((p+!(q*r))=>((p+s)*t))=>!(!t*(!s=>(p+r))+(((!s+!t))=>((p+r)*t)))");
+    //AST wff(&symbols, &ops, "((p+!(q*r))=>((p+s)*t))=>(!t*(!s=>(p+r))+(((!s+!t))=>((p+r)*t)))");
+    //AST wff(&symbols, &ops, "!t*(!s=>(p+r))+(((!s+!t))=>((p+r)*t))");
     //AST wff(&symbols, &ops, "(p+!(q*r))=>((p+s)*t)");
-    //AST wff(symbols, ops, "((p+!(q*r))=>((p+s)*t))=>(p*q)");
-    //AST wff(symbols, ops, "(((p+!(q*r))=>((p+s)*t))=>(p*q))*(!q+p+q)+((p+!(q*r))=>((p+s)*t))");
+    AST wff(&symbols, &ops, "(q+p+s)*(r+p+s)*(!p+t)*(q+t)*(r+t)*(s+p+r+!t)*(s+p+r)");
+    //AST wff(&symbols, &ops, "(((p+!(q*r))=>((p+s)*t))=>(p*q))*(!q+p+q)+((p+!(q*r))=>((p+s)*t))");
 
     wff2cnf.applyTransformations(wff);
 

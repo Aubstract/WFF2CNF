@@ -71,11 +71,6 @@ bool Transformer::traverseAndApplyTransformations(AST& wff, const AST_node* curr
     return applied_transform;
 }
 
-bool containsPatternInAssociation(const AST_node* curr, const AST_node* pattern)
-{
-
-}
-
 bool Transformer::match(const AST_node* wff,
                         const AST_node* pattern,
                         std::map<std::string,AST_node*>& bindings) const
@@ -98,16 +93,7 @@ bool Transformer::match(const AST_node* wff,
     {
         if (bindings.find(pattern->token.lexeme) != bindings.end()) // if already bound
         {
-            // I think this is where I need a loop to keep traversing and searching if pattern token doesnt
-            // equal wff token, AND wff token is the same (associate) operator as pattern token parent <- thats the issue
-            //
-            // Only return false if an equal expression doesnt exit in ALL the connected, associative operands
-            // of the parent operator
-            if (containsPatternInAssociation(wff, bindings.at(pattern->token.lexeme)))
-            {
-
-            }
-            else if (!is_equal(wff, bindings.at(pattern->token.lexeme)))  // if the stored binding is not identical
+            if (!is_equal(wff, bindings.at(pattern->token.lexeme)))  // if the stored binding is not identical
                                                                         // to the current wff
             {
                 return false;

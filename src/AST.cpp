@@ -231,6 +231,7 @@ std::vector<Token> AST::shuntingYard(const std::vector<Token>& tokens) const
     return postfix;
 }
 
+
 void AST::insertNodes(AST_node*& curr, const std::vector<Token>& tokens) const
 {
     std::stack<AST_node*> node_stack;
@@ -257,6 +258,58 @@ void AST::insertNodes(AST_node*& curr, const std::vector<Token>& tokens) const
     curr = node_stack.top();
     node_stack.pop();
 }
+
+/*
+void AST::insertNodes(AST_node*& curr, const std::vector<Token>& tokens) const
+{
+    std::stack<AST_node*> node_stack;
+
+    for (const Token& token : tokens)
+    {
+        AST_node* new_node = new AST_node(token);
+
+        if (ops->matchesOperator(token.lexeme) == MATCH_TRUE)
+        {
+            int num_children = ops->getNumOperands(token.lexeme);
+            new_node->children.resize(num_children, nullptr);
+
+            // Flatten associative operators
+            if (ops->getProperties(token.lexeme).associativity == ASSOCIATIVE)
+            {
+                AST_node* top_node = node_stack.top();
+                node_stack.pop();
+
+                // Check if the operator at the top of the stack is the same
+                // If it is, flatten it by adding to its children
+                if (top_node->token.lexeme == token.lexeme)
+                {
+                    new_node = top_node; // Reuse the existing node
+                    new_node->children.push_back(node_stack.top());
+                }
+                else
+                {
+                    new_node->children[1] = top_node;
+                    new_node->children[0] = node_stack.top();
+                }
+                node_stack.pop();
+            }
+            else
+            {
+                for (int i = num_children - 1; i >= 0; i--)
+                {
+                    new_node->children[i] = node_stack.top();
+                    node_stack.pop();
+                }
+            }
+        }
+
+        node_stack.push(new_node);
+    }
+
+    curr = node_stack.top();
+    node_stack.pop();
+}
+*/
 
 void AST::deleteTree(AST_node* curr)
 {

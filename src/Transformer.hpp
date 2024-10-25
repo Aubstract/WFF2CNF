@@ -31,6 +31,7 @@ private:
     bool match(const AST_node*, const AST_node*, std::map<std::string,AST_node*>&) const;
     static void applyBindings(AST_node*&, const std::map<std::string,AST_node*>&);
     bool traverseAndApplyTransformations(AST&, const AST_node*);
+    bool containsPatternInAssociation(const AST_node*, const AST_node*) const;
 
 public:
     Transformer(const Symbols*, const Operators*, const std::initializer_list<std::pair<std::string,std::string>>&);
